@@ -13,6 +13,10 @@ repositories {
 }
 
 dependencies {
+    implementation("io.projectreactor:reactor-core:3.4.0")
+    testImplementation("io.projectreactor:reactor-test:3.4.0")
+    testImplementation('org.junit.jupiter:junit-jupiter:5.5.1')
+
     implementation 'org.springframework.boot:spring-boot-starter'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
