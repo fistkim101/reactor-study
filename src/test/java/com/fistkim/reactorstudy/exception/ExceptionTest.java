@@ -35,6 +35,28 @@ public class ExceptionTest {
     }
 
     @Test
+    void onErrorMapTest() {
+        Flux<Integer> numbersWithError = Flux.fromIterable(List.of(1, 2, 3))
+                .map(number ->
+                {
+                    if (number == 2) {
+                        throw new RuntimeException();
+                    }
+
+                    return number;
+                })
+                .onErrorMap(exception -> {
+                    throw new IllegalArgumentException();
+                })
+                .log();
+
+        StepVerifier.create(numbersWithError)
+                .expectNext(1)
+                .expectError(IllegalArgumentException.class)
+                .verify();
+    }
+
+    @Test
     void onErrorContinueTest() {
         Flux<Integer> numbersWithError = Flux.fromIterable(List.of(1, 2, 3))
                 .map(number ->
