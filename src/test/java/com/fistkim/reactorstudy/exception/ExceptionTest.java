@@ -35,6 +35,28 @@ public class ExceptionTest {
     }
 
     @Test
+    void onErrorContinueTest() {
+        Flux<Integer> numbersWithError = Flux.fromIterable(List.of(1, 2, 3))
+                .map(number ->
+                {
+                    if (number == 2) {
+                        throw new RuntimeException();
+                    }
+
+                    return number;
+                })
+                .onErrorContinue((exception, number) -> {
+                    System.out.println("exception : " + exception.getClass());
+                    System.out.println("triggered element : " + number);
+                })
+                .log();
+
+        StepVerifier.create(numbersWithError)
+                .expectNext(1, 3)
+                .verifyComplete();
+    }
+
+    @Test
     void onErrorResumeTest_1() {
         Flux<Integer> numbers = Flux.fromIterable(List.of(1, 2, 3));
         Flux<Integer> target = numbers.concatWith(Mono.error(new RuntimeException())).onErrorResume(exception -> {
