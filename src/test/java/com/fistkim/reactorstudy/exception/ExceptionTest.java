@@ -6,13 +6,58 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+import reactor.util.retry.Retry;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @ExtendWith(MockitoExtension.class)
 public class ExceptionTest {
 
+
+    @Test
+    void repeatWithErrorTest() {
+        Flux<Integer> numbers = Flux.fromIterable(List.of(1, 2, 3))
+                .concatWith(Mono.error(new RuntimeException()))
+                .repeat(1).log();
+
+        StepVerifier.create(numbers)
+                .expectNext(1, 2, 3)
+                .expectError(RuntimeException.class)
+                .verify();
+    }
+
+    @Test
+    void repeatTest() {
+        Flux<Integer> numbers = Flux.fromIterable(List.of(1, 2, 3)).repeat(1).log();
+
+        StepVerifier.create(numbers)
+                .expectNext(1, 2, 3, 1, 2, 3)
+                .verifyComplete();
+    }
+
+    @Test
+    void retryWhenTest() throws InterruptedException {
+        Flux<Integer> numbersWithError = Flux.fromIterable(List.of(1, 2, 3))
+                .concatWith(Mono.error(new IllegalStateException()))
+                .doOnError(exception -> {
+                    System.out.println("exception : " + exception.getClass().getName());
+                })
+                .log();
+
+        Retry retrySpec1 = Retry.backoff(3, Duration.ofMillis(300L))
+                .filter(exception -> exception instanceof IllegalStateException);
+
+        Retry retrySpec2 = Retry.backoff(3, Duration.ofMillis(300L))
+                .filter(exception -> exception instanceof IllegalAccessError);
+
+
+        //numbersWithError.retryWhen(retrySpec1).subscribe();
+        numbersWithError.retryWhen(retrySpec2).subscribe();
+
+        Thread.sleep(10000L);
+    }
 
     @Test
     void retryTest() throws InterruptedException {
