@@ -3,16 +3,37 @@ package com.fistkim.reactorstudy.transform;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 import reactor.test.StepVerifier;
 
 import java.time.Duration;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 class TransformServiceTest {
 
     TransformService transformService = new TransformService();
     Flux<String> names = Flux.fromIterable(List.of("alex", "leo", "siri"));
+
+    @Test
+    void flatMapSpeedTest() throws InterruptedException {
+        Flux<Integer> numbers = Flux.fromIterable(IntStream.range(0, 999999).boxed().collect(Collectors.toList()));
+        numbers.subscribeOn(Schedulers.parallel())
+                .map(number -> this.plusAndMinus(number, number))
+                .collectList()
+                .subscribe(System.out::println);
+
+        Thread.sleep(5000L);
+    }
+
+    private Integer plusAndMinus(int number, int applyNumber) {
+        System.out.println(Thread.currentThread().getName());
+        number = number + applyNumber;
+        number = number - applyNumber;
+        return number;
+    }
 
     @Test
     void toUpperCaseFromFlux() {
